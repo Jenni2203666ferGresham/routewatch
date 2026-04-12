@@ -1,0 +1,12 @@
+# Typescript
+
+node_modules/
+coverage/
+.DS_Store
+*.js.map
+npm-debug.log*
+Desktop.ini
+dist/
+.env
+*.tsbuildinfo
+build/
