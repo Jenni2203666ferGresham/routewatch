@@ -35,9 +35,14 @@ program
   .command('snapshot')
   .description('Print a one-time snapshot of current route metrics')
   .action(() => {
-    const metrics = new RouteMetrics();
-    const { renderDashboard } = require('../dashboard/render');
-    console.log(renderDashboard(metrics));
+    try {
+      const metrics = new RouteMetrics();
+      const { renderDashboard } = require('../dashboard/render');
+      console.log(renderDashboard(metrics));
+    } catch (err) {
+      console.error('Error rendering snapshot:', err instanceof Error ? err.message : err);
+      process.exit(1);
+    }
   });
 
 program.parse(process.argv);
