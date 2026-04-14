@@ -32,15 +32,20 @@ export function createFilterPipeline(
   let allowed = 0;
   let rejected = 0;
 
+  /**
+   * Normalises the HTTP method to uppercase before checking against the
+   * configured method allowlist.  Returns true when no method filter is set.
+   */
+  function isMethodAllowed(method: string): boolean {
+    if (!config.methods || config.methods.length === 0) {
+      return true;
+    }
+    return config.methods.includes(method.toUpperCase());
+  }
+
   function process(metric: RouteMetric): boolean {
     processed++;
-    const methodAllowed =
-      !config.methods || config.methods.length === 0
-        ? true
-        : config.methods.includes(metric.method.toUpperCase());
-
-    const routeAllowed = filter(metric.route);
-    const pass = methodAllowed && routeAllowed;
+    const pass = isMethodAllowed(metric.method) && filter(metric.route);
 
     if (pass) {
       allowed++;
