@@ -54,4 +54,17 @@ describe('createSampler', () => {
     expect(ratio).toBeGreaterThan(0.4);
     expect(ratio).toBeLessThan(0.6);
   });
+
+  it('treats distinct routes independently for sampling decisions', () => {
+    const sampler = createSampler(
+      buildSamplingConfig({
+        rate: 1,
+        neverCapture: ['/internal'],
+        alwaysCapture: ['/health'],
+      })
+    );
+    expect(sampler.shouldSample('/health')).toBe(true);
+    expect(sampler.shouldSample('/internal')).toBe(false);
+    expect(sampler.shouldSample('/api/users')).toBe(true);
+  });
 });
