@@ -1,67 +1,47 @@
 import { createDedupeTracker } from './dedupeTracker';
+import { RouteMetric } from '../metrics/RouteMetrics';
+
+function makeMetric(route: string, method = 'GET'): RouteMetric {
+  return { route, method, latency: 50, statusCode: 200, timestamp: Date.now() };
+}
 
 describe('createDedupeTracker', () => {
   it('records a new entry', () => {
     const tracker = createDedupeTracker();
-    tracker.record('/api/users', 'GET', 200);
-    const entry = tracker.getEntry('/api/users', 'GET', 200);
+    const m = makeMetric('/health');
+    const recorded = tracker.record(m);
+    expect(recorded).toBe(true);
+    expect(tracker.getAll()).toHaveLength(1);
+  });
+
+  it('returns false for duplicate within window', () => {
+    const tracker = createDedupeTracker({ windowMs: 5000 });
+    const m = makeMetric('/health');
+    tracker.record(m);
+    expect(tracker.record(m)).toBe(false);
+  });
+
+  it('getEntry returns the stored entry', () => {
+    const tracker = createDedupeTracker();
+    const m = makeMetric('/users', 'POST');
+    tracker.record(m);
+    const entry = tracker.getEntry('POST:/users');
     expect(entry).toBeDefined();
-    expect(entry!.count).toBe(1);
-    expect(entry!.method).toBe('GET');
-    expect(entry!.route).toBe('/api/users');
-    expect(entry!.statusCode).toBe(200);
+    expect(entry?.metric.route).toBe('/users');
   });
 
-  it('increments count on duplicate', () => {
-    const tracker = createDedupeTracker();
-    tracker.record('/api/items', 'POST', 201);
-    tracker.record('/api/items', 'POST', 201);
-    const entry = tracker.getEntry('/api/items', 'POST', 201);
-    expect(entry!.count).toBe(2);
-  });
-
-  it('treats different status codes as distinct keys', () => {
-    const tracker = createDedupeTracker();
-    tracker.record('/api/x', 'GET', 200);
-    tracker.record('/api/x', 'GET', 404);
+  it('evicts oldest when maxTracked exceeded', () => {
+    const tracker = createDedupeTracker({ maxTracked: 2, windowMs: 60000 });
+    tracker.record(makeMetric('/a'));
+    tracker.record(makeMetric('/b'));
+    tracker.record(makeMetric('/c'));
     expect(tracker.getAll()).toHaveLength(2);
   });
 
-  it('treats different methods as distinct keys', () => {
+  it('clear removes all entries', () => {
     const tracker = createDedupeTracker();
-    tracker.record('/api/x', 'GET', 200);
-    tracker.record('/api/x', 'POST', 200);
-    expect(tracker.getAll()).toHaveLength(2);
-  });
-
-  it('normalizes method to uppercase', () => {
-    const tracker = createDedupeTracker();
-    tracker.record('/api/y', 'get', 200);
-    const entry = tracker.getEntry('/api/y', 'get', 200);
-    expect(entry!.method).toBe('GET');
-  });
-
-  it('getAll returns all entries', () => {
-    const tracker = createDedupeTracker();
-    tracker.record('/a', 'GET', 200);
-    tracker.record('/b', 'GET', 200);
-    expect(tracker.getAll()).toHaveLength(2);
-  });
-
-  it('reset clears all entries', () => {
-    const tracker = createDedupeTracker();
-    tracker.record('/a', 'GET', 200);
-    tracker.reset();
+    tracker.record(makeMetric('/x'));
+    tracker.clear();
     expect(tracker.getAll()).toHaveLength(0);
-  });
-
-  it('updates lastSeen on duplicate', async () => {
-    const tracker = createDedupeTracker();
-    tracker.record('/api/z', 'GET', 200);
-    const first = tracker.getEntry('/api/z', 'GET', 200)!.firstSeen;
-    await new Promise(r => setTimeout(r, 5));
-    tracker.record('/api/z', 'GET', 200);
-    const entry = tracker.getEntry('/api/z', 'GET', 200)!;
-    expect(entry.lastSeen).toBeGreaterThanOrEqual(first);
   });
 });
