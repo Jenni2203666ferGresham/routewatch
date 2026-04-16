@@ -1,64 +1,60 @@
 import { createThrottleTracker } from './throttleTracker';
+import { buildThrottleConfig } from './throttleConfig';
 
 describe('createThrottleTracker', () => {
-  it('starts with zeroed stats for a new route', () => {
-    const tracker = createThrottleTracker();
-    const stats = tracker.getStats('/api/test');
-    expect(stats).toEqual({ route: '/api/test', active: 0, queued: 0, rejected: 0, completed: 0 });
+  it('allows requests under the limit', () => {
+    const config = buildThrottleConfig({ maxRequests: 3, windowMs: 1000 });
+    const tracker = createThrottleTracker(config);
+
+    expect(tracker.isAllowed('route-a')).toBe(true);
+    expect(tracker.isAllowed('route-a')).toBe(true);
+    expect(tracker.isAllowed('route-a')).toBe(true);
   });
 
-  it('increments active on acquire', () => {
-    const tracker = createThrottleTracker();
-    tracker.acquire('/api/test');
-    tracker.acquire('/api/test');
-    expect(tracker.getStats('/api/test').active).toBe(2);
+  it('blocks requests over the limit', () => {
+    const config = buildThrottleConfig({ maxRequests: 2, windowMs: 1000 });
+    const tracker = createThrottleTracker(config);
+
+    tracker.isAllowed('route-b');
+    tracker.isAllowed('route-b');
+    expect(tracker.isAllowed('route-b')).toBe(false);
   });
 
-  it('decrements active and increments completed on release', () => {
-    const tracker = createThrottleTracker();
-    tracker.acquire('/api/test');
-    tracker.release('/api/test');
-    const stats = tracker.getStats('/api/test');
-    expect(stats.active).toBe(0);
-    expect(stats.completed).toBe(1);
+  it('tracks different keys independently', () => {
+    const config = buildThrottleConfig({ maxRequests: 1, windowMs: 1000 });
+    const tracker = createThrottleTracker(config);
+
+    expect(tracker.isAllowed('key-1')).toBe(true);
+    expect(tracker.isAllowed('key-2')).toBe(true);
+    expect(tracker.isAllowed('key-1')).toBe(false);
   });
 
-  it('active does not go below zero on extra release', () => {
-    const tracker = createThrottleTracker();
-    tracker.release('/api/test');
-    expect(tracker.getStats('/api/test').active).toBe(0);
+  it('resets counts after the window expires', async () => {
+    const config = buildThrottleConfig({ maxRequests: 1, windowMs: 50 });
+    const tracker = createThrottleTracker(config);
+
+    expect(tracker.isAllowed('route-c')).toBe(true);
+    expect(tracker.isAllowed('route-c')).toBe(false);
+
+    await new Promise((r) => setTimeout(r, 60));
+
+    expect(tracker.isAllowed('route-c')).toBe(true);
   });
 
-  it('increments rejected on reject', () => {
-    const tracker = createThrottleTracker();
-    tracker.reject('/api/test');
-    tracker.reject('/api/test');
-    expect(tracker.getStats('/api/test').rejected).toBe(2);
+  it('returns current count via getCount', () => {
+    const config = buildThrottleConfig({ maxRequests: 5, windowMs: 1000 });
+    const tracker = createThrottleTracker(config);
+
+    tracker.isAllowed('route-d');
+    tracker.isAllowed('route-d');
+
+    expect(tracker.getCount('route-d')).toBe(2);
   });
 
-  it('getAllStats returns all tracked routes', () => {
-    const tracker = createThrottleTracker();
-    tracker.acquire('/a');
-    tracker.acquire('/b');
-    tracker.reject('/c');
-    const all = tracker.getAllStats();
-    expect(all.map(s => s.route).sort()).toEqual(['/a', '/b', '/c']);
-  });
+  it('returns 0 count for unknown key', () => {
+    const config = buildThrottleConfig({ maxRequests: 5, windowMs: 1000 });
+    const tracker = createThrottleTracker(config);
 
-  it('reset clears all state', () => {
-    const tracker = createThrottleTracker();
-    tracker.acquire('/api/test');
-    tracker.reject('/api/test');
-    tracker.reset();
-    expect(tracker.getAllStats()).toHaveLength(0);
-  });
-
-  it('tracks separate state per route', () => {
-    const tracker = createThrottleTracker();
-    tracker.acquire('/a');
-    tracker.acquire('/a');
-    tracker.acquire('/b');
-    expect(tracker.getStats('/a').active).toBe(2);
-    expect(tracker.getStats('/b').active).toBe(1);
+    expect(tracker.getCount('unknown')).toBe(0);
   });
 });
