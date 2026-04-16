@@ -13,6 +13,7 @@ export interface ThrottleTracker {
   getStats(route: string): ThrottleStats;
   getAllStats(): ThrottleStats[];
   reset(): void;
+  resetRoute(route: string): void;
 }
 
 interface RouteState {
@@ -56,6 +57,10 @@ export function createThrottleTracker(): ThrottleTracker {
     },
     reset() {
       state.clear();
+    },
+    /** Resets stats for a single route without affecting others. */
+    resetRoute(route) {
+      state.delete(route);
     },
   };
 }
