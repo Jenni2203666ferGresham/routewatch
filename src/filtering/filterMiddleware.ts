@@ -48,5 +48,11 @@ export function createFilterMiddlewareWithStats(options: FilterMiddlewareOptions
     return { recorded, filtered, total: recorded + filtered };
   }
 
-  return { recordIfAllowed, getStats };
+  /** Resets recorded and filtered counters back to zero. */
+  function resetStats() {
+    recorded = 0;
+    filtered = 0;
+  }
+
+  return { recordIfAllowed, getStats, resetStats };
 }
