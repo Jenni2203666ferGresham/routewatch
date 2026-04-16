@@ -38,9 +38,13 @@ export function validateRouteFilterConfig(config: RouteFilterConfig): string[] {
   const errors: string[] = [];
   if (config.include !== undefined && !Array.isArray(config.include)) {
     errors.push('"include" must be an array of strings');
+  } else if (Array.isArray(config.include) && config.include.some((p) => typeof p !== 'string')) {
+    errors.push('"include" must contain only strings');
   }
   if (config.exclude !== undefined && !Array.isArray(config.exclude)) {
     errors.push('"exclude" must be an array of strings');
+  } else if (Array.isArray(config.exclude) && config.exclude.some((p) => typeof p !== 'string')) {
+    errors.push('"exclude" must contain only strings');
   }
   return errors;
 }
