@@ -13,6 +13,13 @@ function makeRes() {
   return res;
 }
 
+/** Helper to fire middleware N times with the same req/res/next */
+function fireMiddleware(middleware: Function, req: any, res: any, next: jest.Mock, times: number) {
+  for (let i = 0; i < times; i++) {
+    middleware(req, res, next);
+  }
+}
+
 describe('createThrottleMiddleware', () => {
   it('calls next() when under the rate limit', () => {
     const config = buildThrottleConfig({ maxRequests: 5, windowMs: 1000 });
@@ -36,9 +43,7 @@ describe('createThrottleMiddleware', () => {
     const res = makeRes();
     const next = jest.fn();
 
-    middleware(req, res, next);
-    middleware(req, res, next);
-    middleware(req, res, next);
+    fireMiddleware(middleware, req, res, next, 3);
 
     expect(next).toHaveBeenCalledTimes(2);
     expect(res.status).toHaveBeenCalledWith(429);
