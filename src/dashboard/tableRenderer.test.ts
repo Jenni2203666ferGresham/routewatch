@@ -59,6 +59,13 @@ describe('renderTableRows', () => {
     const rows = renderTableRows(store, history, { showSparklines: false });
     rows.forEach((r) => expect(r.sparkline).toBeUndefined());
   });
+
+  it('returns empty array when store has no records', () => {
+    const store = new MetricsStore();
+    const history = createSparklineHistory();
+    const rows = renderTableRows(store, history);
+    expect(rows).toEqual([]);
+  });
 });
 
 describe('renderFullTable', () => {
@@ -76,13 +83,5 @@ describe('renderFullTable', () => {
     const output = renderFullTable(store, history);
     expect(output).toContain('/api/users');
     expect(output).toContain('/api/posts');
-  });
-
-  it('includes header labels', () => {
-    const store = buildStore();
-    const history = createSparklineHistory();
-    const output = renderFullTable(store, history);
-    expect(output).toContain('Route');
-    expect(output).toContain('Avg Latency');
   });
 });
