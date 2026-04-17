@@ -79,4 +79,18 @@ describe('createThrottleMiddleware', () => {
     expect(res1.status).not.toHaveBeenCalled();
     expect(res2.status).not.toHaveBeenCalled();
   });
+
+  it('blocks the same ip on the same route when perIp limit is exceeded', () => {
+    const config = buildThrottleConfig({ maxRequests: 2, windowMs: 1000, perIp: true });
+    const tracker = createThrottleTracker(config);
+    const middleware = createThrottleMiddleware(tracker, config);
+    const next = jest.fn();
+    const req = makeReq('/api/test', 'GET', '10.0.0.1');
+    const res = makeRes();
+
+    fireMiddleware(middleware, req, res, next, 3);
+
+    expect(next).toHaveBeenCalledTimes(2);
+    expect(res.status).toHaveBeenCalledWith(429);
+  });
 });
