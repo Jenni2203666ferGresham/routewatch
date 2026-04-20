@@ -15,6 +15,17 @@ function makeMetric(route: string, statusCode: number): RouteMetric {
   return { method: 'GET', route, statusCode, latencyMs: 10, timestamp: Date.now() };
 }
 
+/** Helper to record N failure metrics for a given route. */
+function recordFailures(
+  mw: ReturnType<typeof createCircuitBreakerMiddleware>,
+  route: string,
+  count: number
+): void {
+  for (let i = 0; i < count; i++) {
+    mw.record(makeMetric(route, 500));
+  }
+}
+
 describe('createCircuitBreakerMiddleware', () => {
   it('records metrics into the store', () => {
     const store = makeStore();
@@ -27,9 +38,7 @@ describe('createCircuitBreakerMiddleware', () => {
     const store = makeStore();
     const mw = createCircuitBreakerMiddleware(store, { failureThreshold: 3, recoveryTimeMs: 60000 });
     const key = 'GET:/api/fail';
-    mw.record(makeMetric('/api/fail', 500));
-    mw.record(makeMetric('/api/fail', 500));
-    mw.record(makeMetric('/api/fail', 500));
+    recordFailures(mw, '/api/fail', 3);
     expect(mw.isOpen(key)).toBe(true);
   });
 
@@ -45,8 +54,7 @@ describe('createCircuitBreakerMiddleware', () => {
     const onOpen = jest.fn();
     const store = makeStore();
     const mw = createCircuitBreakerMiddleware(store, { failureThreshold: 2, onOpen });
-    mw.record(makeMetric('/api/x', 500));
-    mw.record(makeMetric('/api/x', 500));
+    recordFailures(mw, '/api/x', 2);
     expect(onOpen).toHaveBeenCalledWith('GET:/api/x');
   });
 
@@ -64,8 +72,7 @@ describe('createCircuitBreakerMiddleware', () => {
   it('reset removes the breaker for a route', () => {
     const store = makeStore();
     const mw = createCircuitBreakerMiddleware(store, { failureThreshold: 2 });
-    mw.record(makeMetric('/api/r', 500));
-    mw.record(makeMetric('/api/r', 500));
+    recordFailures(mw, '/api/r', 2);
     expect(mw.isOpen('GET:/api/r')).toBe(true);
     mw.reset('GET:/api/r');
     expect(mw.isOpen('GET:/api/r')).toBe(false);
