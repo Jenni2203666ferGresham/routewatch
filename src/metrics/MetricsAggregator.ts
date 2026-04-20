@@ -60,3 +60,13 @@ export function getHighestErrorRoutes(store: MetricsStore, topN = 5): Aggregated
     .sort((a, b) => b.errorRate - a.errorRate)
     .slice(0, topN);
 }
+
+/**
+ * Returns the routes with the highest requests-per-minute, useful for
+ * identifying hotspots and potential bottlenecks under load.
+ */
+export function getHighestThroughputRoutes(store: MetricsStore, topN = 5): AggregatedStats[] {
+  return aggregateMetrics(store)
+    .sort((a, b) => b.requestsPerMinute - a.requestsPerMinute)
+    .slice(0, topN);
+}
