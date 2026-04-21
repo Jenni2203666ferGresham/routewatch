@@ -14,6 +14,7 @@ export interface RouteDeprecator {
   getEntry(method: string, route: string): DeprecationEntry | undefined;
   getAll(): DeprecationEntry[];
   getExpired(asOf?: Date): DeprecationEntry[];
+  getSunsetingSoon(withinDays: number, asOf?: Date): DeprecationEntry[];
 }
 
 function makeKey(method: string, route: string): string {
@@ -53,5 +54,16 @@ export function createRouteDeprecator(): RouteDeprecator {
     return getAll().filter(e => e.sunsetAt !== undefined && e.sunsetAt <= asOf);
   }
 
-  return { deprecate, undeprecate, isDeprecated, getEntry, getAll, getExpired };
+  /**
+   * Returns all deprecated routes whose sunset date falls within the next
+   * `withinDays` days from `asOf`, excluding already-expired routes.
+   */
+  function getSunsetingSoon(withinDays: number, asOf: Date = new Date()): DeprecationEntry[] {
+    const cutoff = new Date(asOf.getTime() + withinDays * 24 * 60 * 60 * 1000);
+    return getAll().filter(
+      e => e.sunsetAt !== undefined && e.sunsetAt > asOf && e.sunsetAt <= cutoff
+    );
+  }
+
+  return { deprecate, undeprecate, isDeprecated, getEntry, getAll, getExpired, getSunsetingSoon };
 }
