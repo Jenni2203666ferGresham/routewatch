@@ -44,6 +44,13 @@ describe('scoreRoute', () => {
     const recent = scoreRoute(makeInput({ lastSeenAt: NOW - 100 }), {}, NOW);
     expect(recent.factors.recency).toBeGreaterThan(0.9);
   });
+
+  it('returns the route and method on the result', () => {
+    const input = makeInput({ route: '/api/orders', method: 'POST' });
+    const result = scoreRoute(input, {}, NOW);
+    expect(result.route).toBe('/api/orders');
+    expect(result.method).toBe('POST');
+  });
 });
 
 describe('createRouteScorer', () => {
@@ -72,5 +79,11 @@ describe('createRouteScorer', () => {
     const low = scorer.score(makeInput({ errorRate: 0.1 }), NOW);
     const high = scorer.score(makeInput({ errorRate: 0.9 }), NOW);
     expect(high.score).toBeGreaterThan(low.score);
+  });
+
+  it('scoreAll returns an empty array when given no inputs', () => {
+    const scorer = createRouteScorer();
+    const results = scorer.scoreAll([], NOW);
+    expect(results).toEqual([]);
   });
 });
