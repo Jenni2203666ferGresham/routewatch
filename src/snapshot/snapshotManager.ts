@@ -44,7 +44,11 @@ export function loadSnapshot(filepath: string): Snapshot {
     throw new Error(`Snapshot file not found: ${filepath}`);
   }
   const raw = fs.readFileSync(filepath, 'utf-8');
-  return JSON.parse(raw) as Snapshot;
+  try {
+    return JSON.parse(raw) as Snapshot;
+  } catch {
+    throw new Error(`Failed to parse snapshot file: ${filepath}`);
+  }
 }
 
 export function listSnapshots(outputDir: string): string[] {
@@ -53,6 +57,17 @@ export function listSnapshots(outputDir: string): string[] {
     .readdirSync(outputDir)
     .filter((f) => f.endsWith('.json'))
     .map((f) => path.join(outputDir, f));
+}
+
+/**
+ * Deletes a snapshot file from disk.
+ * Throws if the file does not exist.
+ */
+export function deleteSnapshot(filepath: string): void {
+  if (!fs.existsSync(filepath)) {
+    throw new Error(`Snapshot file not found: ${filepath}`);
+  }
+  fs.unlinkSync(filepath);
 }
 
 export function createSnapshotManager(store: MetricsStore, outputDir: string) {
@@ -66,6 +81,9 @@ export function createSnapshotManager(store: MetricsStore, outputDir: string) {
     },
     load(filepath: string): Snapshot {
       return loadSnapshot(filepath);
+    },
+    delete(filepath: string): void {
+      deleteSnapshot(filepath);
     },
   };
 }
