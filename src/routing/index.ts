@@ -1,41 +1,34 @@
-export { createRouteRegistry } from './routeRegistry';
-export type { RouteRegistry } from './routeRegistry';
-
-export { normalizeRoute, extractParams, createRouteNormalizer } from './routeNormalizer';
-
-export { createRouteMatcher } from './routeMatcher';
-
-export { groupRoutes, extractPrefix, createRouteGrouper } from './routeGrouper';
-
-export { createRouteAliasMap } from './routeAliasMap';
-
-export { scoreRoute, createRouteScorer } from './routeScorer';
-
-export { createRouteWatcher } from './routeWatcher';
-
-export { createRouteWatcherMiddleware } from './routeWatcherMiddleware';
-
-export { extractVersionFromPath, stripVersion, createRouteVersioner } from './routeVersioner';
-
-export { createRouteDeprecator } from './routeDeprecator';
-export { createDeprecatorMiddleware } from './deprecatorMiddleware';
-
-export { createRoutePriorityQueue } from './routePriorityQueue';
-export { createRoutePriorityMiddleware } from './routePriorityMiddleware';
-
-export { createRouteChangeLog } from './routeChangeLog';
-
-export { createRouteLifecycle } from './routeLifecycle';
-
-export { createRouteDependencyGraph } from './routeDependencyGraph';
-
-export { createRouteMetadataStore } from './routeMetadataStore';
-export { createRouteMetadataMiddleware } from './routeMetadataMiddleware';
-
-export { createRouteAccessLog } from './routeAccessLog';
-
-export { createRouteTagIndex } from './routeTagIndex';
-export type { RouteTagIndex, TagIndexEntry } from './routeTagIndex';
-
-export { createRouteTagIndexMiddleware } from './routeTagIndexMiddleware';
-export type { RouteTagIndexMiddleware, TagIndexMiddlewareOptions } from './routeTagIndexMiddleware';
+export * from './routeRegistry';
+export * from './routeNormalizer';
+export * from './routeMatcher';
+export * from './routeGrouper';
+export * from './routeAliasMap';
+export * from './routeScorer';
+export * from './routeWatcher';
+export * from './routeWatcherMiddleware';
+export * from './routeVersioner';
+export * from './routeDeprecator';
+export * from './deprecatorMiddleware';
+export * from './routePriorityQueue';
+export * from './routePriorityMiddleware';
+export * from './routeChangeLog';
+export * from './routeLifecycle';
+export * from './routeDependencyGraph';
+export * from './routeMetadataStore';
+export * from './routeMetadataMiddleware';
+export * from './routeAccessLog';
+export * from './routeTagIndex';
+export * from './routeTagIndexMiddleware';
+export * from './routeOwnershipMap';
+export * from './routeOwnershipMiddleware';
+export * from './routePermissionMap';
+export * from './routePermissionMiddleware';
+export * from './routeHeatmap';
+export * from './routeHeatmapMiddleware';
+export * from './routeLatencyMap';
+export * from './routeErrorLog';
+export * from './routeErrorLogMiddleware';
+export * from './routeSLATracker';
+export * from './routeSLAMiddleware';
+export * from './routeCostEstimator';
+export * from './routeCostMiddleware';
