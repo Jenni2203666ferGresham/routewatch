@@ -17,12 +17,25 @@ export function buildThrottleConfig(partial: Partial<ThrottleConfig> = {}): Thro
 export function validateThrottleConfig(config: ThrottleConfig): string[] {
   const errors: string[] = [];
 
-  if (config.maxConcurrent < 1) {
-    errors.push('maxConcurrent must be at least 1');
+  if (!Number.isInteger(config.maxConcurrent) || config.maxConcurrent < 1) {
+    errors.push('maxConcurrent must be a positive integer');
   }
-  if (config.queueTimeout < 0) {
-    errors.push('queueTimeout must be non-negative');
+  if (!Number.isFinite(config.queueTimeout) || config.queueTimeout < 0) {
+    errors.push('queueTimeout must be a non-negative finite number');
   }
 
   return errors;
+}
+
+/**
+ * Builds and validates a ThrottleConfig in one step.
+ * Throws an error if the resulting config is invalid.
+ */
+export function buildValidatedThrottleConfig(partial: Partial<ThrottleConfig> = {}): ThrottleConfig {
+  const config = buildThrottleConfig(partial);
+  const errors = validateThrottleConfig(config);
+  if (errors.length > 0) {
+    throw new Error(`Invalid ThrottleConfig: ${errors.join('; ')}`);
+  }
+  return config;
 }
