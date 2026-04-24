@@ -16,6 +16,10 @@ describe('formatLatency', () => {
     expect(formatLatency(0.5)).toBe('<1ms');
   });
 
+  it('returns <1ms for zero', () => {
+    expect(formatLatency(0)).toBe('<1ms');
+  });
+
   it('formats milliseconds correctly', () => {
     expect(formatLatency(42)).toBe('42ms');
     expect(formatLatency(999)).toBe('999ms');
@@ -36,6 +40,10 @@ describe('formatErrorRate', () => {
     expect(formatErrorRate(1, 10)).toBe('10.00%');
     expect(formatErrorRate(3, 4)).toBe('75.00%');
   });
+
+  it('returns 100.00% when all requests are errors', () => {
+    expect(formatErrorRate(5, 5)).toBe('100.00%');
+  });
 });
 
 describe('formatRow', () => {
@@ -49,6 +57,12 @@ describe('formatRow', () => {
     const row = formatRow('POST /login', makeStats({ avgLatency: 200, errors: 2, hits: 20 }));
     expect(row.avgLatency).toBe('200ms');
     expect(row.errorRate).toBe('10.00%');
+  });
+
+  it('includes min and max latency fields', () => {
+    const row = formatRow('GET /ping', makeStats({ minLatency: 5, maxLatency: 300 }));
+    expect(row.minLatency).toBe('5ms');
+    expect(row.maxLatency).toBe('300ms');
   });
 });
 
